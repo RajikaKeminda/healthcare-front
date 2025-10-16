@@ -2,8 +2,14 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "../contexts/AuthContext";
-import { ToastContainer } from 'react-toastify';
+import dynamic from 'next/dynamic';
 import 'react-toastify/dist/ReactToastify.css';
+
+// Dynamically import ToastContainer to avoid SSR issues
+const ToastContainer = dynamic(
+  () => import('react-toastify').then((mod) => mod.ToastContainer),
+  { ssr: false }
+);
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +38,7 @@ export default function RootLayout({
       >
         <AuthProvider>
           {children}
-          {/* <ToastContainer
+          <ToastContainer
             position="top-right"
             autoClose={5000}
             hideProgressBar={false}
@@ -43,7 +49,7 @@ export default function RootLayout({
             draggable
             pauseOnHover
             theme="light"
-          /> */}
+          />
         </AuthProvider>
       </body>
     </html>

@@ -1,28 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useAuth } from '../../../../contexts/AuthContext';
-import { medicalRecordsAPI, usersAPI, appointmentsAPI, hospitalsAPI } from '../../../../lib/api';
-import { toast } from 'react-toastify';
-import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
-import { FileText, User, ArrowLeft, Plus, X, Upload } from 'lucide-react';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { toast } from 'react-toastify';
+import { medicalRecordsAPI, usersAPI, hospitalsAPI } from '../../../../../lib/api';
+import { useAuth } from '../../../../../contexts/AuthContext';
+import LoadingSpinner from '../../../../../components/ui/LoadingSpinner';
+import { ArrowLeft, Save, Plus, X } from 'lucide-react';
 
-export default function CreateMedicalRecord() {
-  const { user } = useAuth();
-  const searchParams = useSearchParams();
-  const [loading, setLoading] = useState(false);
+export default function EditMedicalRecordPage() {
+  const params = useParams();
+  const router = useRouter();
+  const { user, loading: authLoading } = useAuth();
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [patients, setPatients] = useState([]);
-  const [hospitals, setHospitals] = useState([]);
-  const [appointments, setAppointments] = useState([]);
-  const [selectedPatient, setSelectedPatient] = useState(null);
-  const [selectedAppointment, setSelectedAppointment] = useState(null);
-  const [formData, setFormData] = useState({
+  const [hospitals, setHospitals] = useState<any[]>([]);
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [formData, setFormData] = useState<any>({
     patientID: '',
     appointmentID: '',
-    hospitalID: user?.hospitalID || '',
+    hospitalID: '',
     chiefComplaint: '',
     historyOfPresentIllness: '',
     physicalExamination: {
@@ -71,47 +69,73 @@ export default function CreateMedicalRecord() {
     instructions: ''
   });
 
-  const [newLabResult, setNewLabResult] = useState({
-    testName: '',
-    testDate: '',
-    results: '',
-    normalRange: '',
-    status: 'normal',
-    notes: ''
-  });
-
-  const [newAllergy, setNewAllergy] = useState({
-    allergen: '',
-    reaction: '',
-    severity: 'mild'
-  });
+  const id = Array.isArray(params?.id) ? params?.id[0] : (params as any)?.id;
 
   useEffect(() => {
-    fetchPatients();
-    fetchHospitals();
-    fetchDoctorAppointments();
-    
-    // Pre-fill form if patientId and appointmentId are provided
-    const patientId = searchParams.get('patientId');
-    const appointmentId = searchParams.get('appointmentId');
-    
-    if (patientId) {
-      setFormData(prev => ({ ...prev, patientID: patientId }));
-      fetchPatient(patientId);
+    if (!authLoading && user && user.role !== 'healthcare_professional') {
+      router.push('/');
     }
-    
-    if (appointmentId) {
-      setFormData(prev => ({ ...prev, appointmentID: appointmentId }));
-      fetchAppointment(appointmentId);
-    }
-  }, [searchParams]);
+  }, [user, authLoading, router]);
 
-  const fetchPatients = async () => {
+  useEffect(() => {
+    if (id && user) {
+      fetchMedicalRecord();
+      fetchHospitals();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, user]);
+
+  const fetchMedicalRecord = async () => {
     try {
-      const response = await usersAPI.getAll({ role: 'patient', limit: 100 });
-      setPatients(response.data.data.users);
-    } catch (error) {
-      toast.error('Failed to load patients');
+      setLoading(true);
+      const res = await medicalRecordsAPI.getById(id as string);
+      const record = res.data.data.medicalRecord;
+      
+      // Populate form with existing data
+      setFormData({
+        patientID: record.patientID?._id || record.patientID || '',
+        appointmentID: record.appointmentID?._id || record.appointmentID || '',
+        hospitalID: record.hospitalID?._id || record.hospitalID || '',
+        chiefComplaint: record.chiefComplaint || '',
+        historyOfPresentIllness: record.historyOfPresentIllness || record.history?.presentIllness || '',
+        physicalExamination: {
+          vitalSigns: {
+            bloodPressure: record.physicalExamination?.vitalSigns?.bloodPressure || '',
+            heartRate: record.physicalExamination?.vitalSigns?.heartRate || '',
+            temperature: record.physicalExamination?.vitalSigns?.temperature || '',
+            respiratoryRate: record.physicalExamination?.vitalSigns?.respiratoryRate || '',
+            oxygenSaturation: record.physicalExamination?.vitalSigns?.oxygenSaturation || '',
+            weight: record.physicalExamination?.vitalSigns?.weight || '',
+            height: record.physicalExamination?.vitalSigns?.height || ''
+          },
+          generalAppearance: record.physicalExamination?.generalAppearance || '',
+          cardiovascular: record.physicalExamination?.cardiovascular || '',
+          respiratory: record.physicalExamination?.respiratory || '',
+          gastrointestinal: record.physicalExamination?.gastrointestinal || '',
+          neurological: record.physicalExamination?.neurological || '',
+          musculoskeletal: record.physicalExamination?.musculoskeletal || '',
+          skin: record.physicalExamination?.skin || '',
+          other: record.physicalExamination?.other || ''
+        },
+        diagnosis: record.diagnosis || [],
+        treatmentPlan: {
+          medications: record.treatmentPlan?.medications || [],
+          procedures: record.treatmentPlan?.procedures || [],
+          lifestyleRecommendations: record.treatmentPlan?.lifestyleRecommendations || [],
+          followUpInstructions: record.treatmentPlan?.followUpInstructions || '',
+          nextAppointment: record.treatmentPlan?.nextAppointment || ''
+        },
+        labResults: record.labResults || [],
+        imagingResults: record.imagingResults || [],
+        allergies: record.allergies || []
+      });
+
+      setSelectedPatient(record.patientID);
+    } catch (err) {
+      toast.error('Failed to load medical record');
+      router.push('/doctor/medical-records');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -124,141 +148,10 @@ export default function CreateMedicalRecord() {
     }
   };
 
-  const fetchDoctorAppointments = async () => {
-    try {
-      const response = await appointmentsAPI.getAll({ 
-        doctorID: user?._id,
-        status: 'completed',
-        limit: 100 
-      });
-      setAppointments(response.data.data.appointments);
-    } catch (error) {
-      console.error('Failed to load appointments');
-    }
-  };
-
-  const fetchPatient = async (patientId) => {
-    try {
-      const response = await usersAPI.getById(patientId);
-      setSelectedPatient(response.data.data.user);
-    } catch (error) {
-      toast.error('Failed to load patient details');
-    }
-  };
-
-  const fetchAppointment = async (appointmentId) => {
-    try {
-      const response = await appointmentsAPI.getById(appointmentId);
-      const appointment = response.data.data.appointment;
-      setSelectedAppointment(appointment);
-      
-      // Auto-fill patient and hospital from appointment
-      if (appointment.patientID) {
-        const patientId = appointment.patientID._id || appointment.patientID;
-        setFormData(prev => ({ ...prev, patientID: patientId }));
-        fetchPatient(patientId);
-      }
-      
-      if (appointment.hospitalID) {
-        setFormData(prev => ({ ...prev, hospitalID: appointment.hospitalID._id || appointment.hospitalID }));
-      }
-    } catch (error) {
-      toast.error('Failed to load appointment details');
-    }
-  };
-
-  const handlePatientSelect = (patientId) => {
-    setFormData(prev => ({ ...prev, patientID: patientId }));
-    fetchPatient(patientId);
-  };
-
-  const handleAppointmentSelect = (appointmentId) => {
-    setFormData(prev => ({ ...prev, appointmentID: appointmentId }));
-    if (appointmentId) {
-      fetchAppointment(appointmentId);
-    } else {
-      setSelectedAppointment(null);
-    }
-  };
-
-  const addDiagnosis = () => {
-    if (newDiagnosis.description.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        diagnosis: [...prev.diagnosis, { ...newDiagnosis }]
-      }));
-      setNewDiagnosis({ description: '', code: '', type: 'primary' });
-    }
-  };
-
-  const removeDiagnosis = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      diagnosis: prev.diagnosis.filter((_, i) => i !== index)
-    }));
-  };
-
-  const addMedication = () => {
-    if (newMedication.name.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        treatmentPlan: {
-          ...prev.treatmentPlan,
-          medications: [...prev.treatmentPlan.medications, { ...newMedication }]
-        }
-      }));
-      setNewMedication({ name: '', dosage: '', frequency: '', duration: '', instructions: '' });
-    }
-  };
-
-  const removeMedication = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      treatmentPlan: {
-        ...prev.treatmentPlan,
-        medications: prev.treatmentPlan.medications.filter((_, i) => i !== index)
-      }
-    }));
-  };
-
-  const addLabResult = () => {
-    if (newLabResult.testName.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        labResults: [...prev.labResults, { ...newLabResult }]
-      }));
-      setNewLabResult({ testName: '', testDate: '', results: '', normalRange: '', status: 'normal', notes: '' });
-    }
-  };
-
-  const removeLabResult = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      labResults: prev.labResults.filter((_, i) => i !== index)
-    }));
-  };
-
-  const addAllergy = () => {
-    if (newAllergy.allergen.trim()) {
-      setFormData(prev => ({
-        ...prev,
-        allergies: [...prev.allergies, { ...newAllergy }]
-      }));
-      setNewAllergy({ allergen: '', reaction: '', severity: 'mild' });
-    }
-  };
-
-  const removeAllergy = (index) => {
-    setFormData(prev => ({
-      ...prev,
-      allergies: prev.allergies.filter((_, i) => i !== index)
-    }));
-  };
-
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: string, value: any) => {
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
-      setFormData(prev => ({
+      setFormData((prev: any) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
@@ -266,15 +159,15 @@ export default function CreateMedicalRecord() {
         }
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev: any) => ({
         ...prev,
         [field]: value
       }));
     }
   };
 
-  const handleVitalSignsChange = (field, value) => {
-    setFormData(prev => ({
+  const handleVitalSignsChange = (field: string, value: any) => {
+    setFormData((prev: any) => ({
       ...prev,
       physicalExamination: {
         ...prev.physicalExamination,
@@ -286,7 +179,47 @@ export default function CreateMedicalRecord() {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const addDiagnosis = () => {
+    if (newDiagnosis.description.trim()) {
+      setFormData((prev: any) => ({
+        ...prev,
+        diagnosis: [...prev.diagnosis, { ...newDiagnosis }]
+      }));
+      setNewDiagnosis({ description: '', code: '', type: 'primary' });
+    }
+  };
+
+  const removeDiagnosis = (index: number) => {
+    setFormData((prev: any) => ({
+      ...prev,
+      diagnosis: prev.diagnosis.filter((_: any, i: number) => i !== index)
+    }));
+  };
+
+  const addMedication = () => {
+    if (newMedication.name.trim()) {
+      setFormData((prev: any) => ({
+        ...prev,
+        treatmentPlan: {
+          ...prev.treatmentPlan,
+          medications: [...prev.treatmentPlan.medications, { ...newMedication }]
+        }
+      }));
+      setNewMedication({ name: '', dosage: '', frequency: '', duration: '', instructions: '' });
+    }
+  };
+
+  const removeMedication = (index: number) => {
+    setFormData((prev: any) => ({
+      ...prev,
+      treatmentPlan: {
+        ...prev.treatmentPlan,
+        medications: prev.treatmentPlan.medications.filter((_: any, i: number) => i !== index)
+      }
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.patientID || !formData.hospitalID || !formData.chiefComplaint) {
@@ -296,117 +229,75 @@ export default function CreateMedicalRecord() {
 
     try {
       setSubmitting(true);
-      
-      const response = await medicalRecordsAPI.create(formData);
-      
-      if (response.data.success) {
-        toast.success('Medical record created successfully!');
-        // Redirect to medical records list
-        window.location.href = '/doctor/medical-records';
-      }
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create medical record');
+      await medicalRecordsAPI.update(id as string, formData);
+      toast.success('Medical record updated successfully!');
+      router.push(`/doctor/medical-records/${id}`);
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || 'Failed to update medical record');
     } finally {
       setSubmitting(false);
     }
   };
 
+  if (authLoading || loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="large" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
       <header className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center py-6">
             <Link
-              href="/doctor/dashboard"
+              href={`/doctor/medical-records/${id}`}
               className="flex items-center text-gray-600 hover:text-gray-900 mr-4"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />
-              Back to Dashboard
+              Cancel
             </Link>
-            <h1 className="text-3xl font-bold text-gray-900">Create Medical Record</h1>
+            <h1 className="text-3xl font-bold text-gray-900">Edit Medical Record</h1>
           </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto py-6 sm:px-6 lg:px-8">
         <form onSubmit={handleSubmit} className="space-y-8">
-          {/* Patient Selection */}
+          {/* Patient Information (Read-only) */}
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Patient Information</h2>
+            {selectedPatient && (
+              <div className="bg-gray-50 p-4 rounded-md">
+                <h3 className="font-medium text-gray-900">Patient Details</h3>
+                <p className="text-sm text-gray-600">Name: {selectedPatient.userName}</p>
+                <p className="text-sm text-gray-600">Email: {selectedPatient.email}</p>
+                <p className="text-sm text-gray-600">Phone: {selectedPatient.phone}</p>
+                {selectedPatient.bloodType && (
+                  <p className="text-sm text-gray-600">Blood Type: {selectedPatient.bloodType}</p>
+                )}
+              </div>
+            )}
             
-            {/* Quick Select from Appointment */}
-            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-md">
+            <div className="mt-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Quick Select from Appointment (Optional)
+                Hospital *
               </label>
               <select
-                value={formData.appointmentID}
-                onChange={(e) => handleAppointmentSelect(e.target.value)}
+                value={formData.hospitalID}
+                onChange={(e) => handleInputChange('hospitalID', e.target.value)}
+                required
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
-                <option value="">Select an appointment to auto-fill patient & hospital</option>
-                {appointments.map((appointment) => (
-                  <option key={appointment._id} value={appointment._id}>
-                    {appointment.appointmentID} - {appointment.patientID?.userName} - {new Date(appointment.date).toLocaleDateString()} {appointment.time}
+                <option value="">Select a hospital</option>
+                {hospitals.map((hospital) => (
+                  <option key={hospital._id} value={hospital._id}>
+                    {hospital.name}
                   </option>
                 ))}
               </select>
-              <p className="text-xs text-gray-500 mt-1">
-                Selecting an appointment will automatically fill patient and hospital information below
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Patient *
-                </label>
-                <select
-                  value={formData.patientID}
-                  onChange={(e) => handlePatientSelect(e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="">Select a patient</option>
-                  {patients.map((patient) => (
-                    <option key={patient._id} value={patient._id}>
-                      {patient.userName} - {patient.email}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Select Hospital *
-                </label>
-                <select
-                  value={formData.hospitalID}
-                  onChange={(e) => handleInputChange('hospitalID', e.target.value)}
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                >
-                  <option value="">Select a hospital</option>
-                  {hospitals.map((hospital) => (
-                    <option key={hospital._id} value={hospital._id}>
-                      {hospital.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              {selectedPatient && (
-                <div className="bg-gray-50 p-4 rounded-md md:col-span-2">
-                  <h3 className="font-medium text-gray-900">Patient Details</h3>
-                  <p className="text-sm text-gray-600">Name: {selectedPatient.userName}</p>
-                  <p className="text-sm text-gray-600">Email: {selectedPatient.email}</p>
-                  <p className="text-sm text-gray-600">Phone: {selectedPatient.phone}</p>
-                  {selectedPatient.bloodType && (
-                    <p className="text-sm text-gray-600">Blood Type: {selectedPatient.bloodType}</p>
-                  )}
-                </div>
-              )}
             </div>
           </div>
 
@@ -464,14 +355,14 @@ export default function CreateMedicalRecord() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Temperature</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Temperature (°C)</label>
                   <input
                     type="number"
                     step="0.1"
                     value={formData.physicalExamination.vitalSigns.temperature}
                     onChange={(e) => handleVitalSignsChange('temperature', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                    placeholder="98.6"
+                    placeholder="37.0"
                   />
                 </div>
                 <div>
@@ -582,7 +473,7 @@ export default function CreateMedicalRecord() {
             {/* Diagnosis List */}
             {formData.diagnosis.length > 0 && (
               <div className="space-y-2">
-                {formData.diagnosis.map((diagnosis, index) => (
+                {formData.diagnosis.map((diagnosis: any, index: number) => (
                   <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
                     <div>
                       <span className="font-medium">{diagnosis.description}</span>
@@ -679,7 +570,7 @@ export default function CreateMedicalRecord() {
               {/* Medications List */}
               {formData.treatmentPlan.medications.length > 0 && (
                 <div className="space-y-2">
-                  {formData.treatmentPlan.medications.map((medication, index) => (
+                  {formData.treatmentPlan.medications.map((medication: any, index: number) => (
                     <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
                       <div>
                         <span className="font-medium">{medication.name}</span>
@@ -720,7 +611,7 @@ export default function CreateMedicalRecord() {
           <div className="bg-white shadow rounded-lg p-6">
             <div className="flex justify-end space-x-4">
               <Link
-                href="/doctor/dashboard"
+                href={`/doctor/medical-records/${id}`}
                 className="px-6 py-3 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 Cancel
@@ -728,15 +619,18 @@ export default function CreateMedicalRecord() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
               >
                 {submitting ? (
-                  <div className="flex items-center">
-                    <LoadingSpinner size="small" className="mr-2" />
-                    Creating...
-                  </div>
+                  <>
+                    <LoadingSpinner size="small" />
+                    <span className="ml-2">Saving...</span>
+                  </>
                 ) : (
-                  'Create Medical Record'
+                  <>
+                    <Save className="w-4 h-4 mr-2" />
+                    Save Changes
+                  </>
                 )}
               </button>
             </div>

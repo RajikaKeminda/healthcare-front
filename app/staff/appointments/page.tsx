@@ -4,19 +4,19 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
-import { paymentsAPI, usersAPI } from '../../../lib/api';
+import { appointmentsAPI } from '../../../lib/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import LoadingSpinner from '../../../components/ui/LoadingSpinner';
-import { ArrowLeft, CreditCard, Search, Filter, Plus, Eye } from 'lucide-react';
+import { ArrowLeft, Calendar, Clock, User, Search, Filter } from 'lucide-react';
 
-export default function StaffPaymentsPage() {
+export default function StaffAppointmentsPage() {
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [payments, setPayments] = useState<any[]>([]);
+  const [appointments, setAppointments] = useState<any[]>([]);
   const [filters, setFilters] = useState({
     status: '',
-    method: '',
+    date: '',
     search: ''
   });
 
@@ -27,42 +27,42 @@ export default function StaffPaymentsPage() {
   }, [user, authLoading, router]);
 
   useEffect(() => {
-    if (user) fetchPayments();
+    if (user) fetchAppointments();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, filters.status, filters.method]);
+  }, [user, filters.status, filters.date]);
 
-  const fetchPayments = async () => {
+  const fetchAppointments = async () => {
     try {
       setLoading(true);
       const params: any = { limit: 100 };
       if (filters.status) params.status = filters.status;
-      if (filters.method) params.method = filters.method;
+      if (filters.date) params.date = filters.date;
 
-      const res = await paymentsAPI.getAll(params);
-      setPayments(res.data.data.payments);
+      const res = await appointmentsAPI.getAll(params);
+      setAppointments(res.data.data.appointments);
     } catch (err) {
-      toast.error('Failed to load payments');
+      toast.error('Failed to load appointments');
     } finally {
       setLoading(false);
     }
   };
 
-  const updatePaymentStatus = async (id: string, status: string) => {
+  const updateStatus = async (id: string, status: string) => {
     try {
-      await paymentsAPI.update(id, { status });
-      toast.success('Payment updated successfully');
-      fetchPayments();
+      await appointmentsAPI.update(id, { status });
+      toast.success('Appointment updated');
+      fetchAppointments();
     } catch (err) {
-      toast.error('Failed to update payment');
+      toast.error('Failed to update appointment');
     }
   };
 
-  const filteredPayments = payments.filter((payment) => {
+  const filteredAppointments = appointments.filter((apt) => {
     if (!filters.search) return true;
     const query = filters.search.toLowerCase();
     return (
-      payment.patientID?.userName?.toLowerCase().includes(query) ||
-      payment.transactionReference?.toLowerCase().includes(query)
+      apt.patientID?.userName?.toLowerCase().includes(query) ||
+      apt.doctorID?.userName?.toLowerCase().includes(query)
     );
   });
 
@@ -82,13 +82,7 @@ export default function StaffPaymentsPage() {
             <Link href="/staff/dashboard" className="flex items-center text-gray-600 hover:text-gray-900">
               <ArrowLeft className="w-5 h-5 mr-2" /> Back to Dashboard
             </Link>
-            <h1 className="text-2xl font-bold text-gray-900">Payment Management</h1>
-            <Link
-              href="/staff/payments/create"
-              className="px-4 py-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 inline-flex items-center"
-            >
-              <Plus className="w-4 h-4 mr-2" /> New Payment
-            </Link>
+            <h1 className="text-2xl font-bold text-gray-900">Manage Appointments</h1>
           </div>
         </div>
       </header>
@@ -108,29 +102,21 @@ export default function StaffPaymentsPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="">All</option>
-                <option value="pending">Pending</option>
-                <option value="processing">Processing</option>
+                <option value="scheduled">Scheduled</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="in_progress">In Progress</option>
                 <option value="completed">Completed</option>
-                <option value="failed">Failed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Method</label>
-              <select
-                value={filters.method}
-                onChange={(e) => setFilters(prev => ({ ...prev, method: e.target.value }))}
+              <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+              <input
+                type="date"
+                value={filters.date}
+                onChange={(e) => setFilters(prev => ({ ...prev, date: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-              >
-                <option value="">All</option>
-                <option value="cash">Cash</option>
-                <option value="credit_card">Credit Card</option>
-                <option value="debit_card">Debit Card</option>
-                <option value="insurance">Insurance</option>
-                <option value="government">Government</option>
-                <option value="bank_transfer">Bank Transfer</option>
-                <option value="digital_wallet">Digital Wallet</option>
-              </select>
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Search</label>
@@ -140,14 +126,14 @@ export default function StaffPaymentsPage() {
                   type="text"
                   value={filters.search}
                   onChange={(e) => setFilters(prev => ({ ...prev, search: e.target.value }))}
-                  placeholder="Patient name or ref"
+                  placeholder="Patient or Doctor name"
                   className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 />
               </div>
             </div>
             <div className="flex items-end">
               <button
-                onClick={() => setFilters({ status: '', method: '', search: '' })}
+                onClick={() => setFilters({ status: '', date: '', search: '' })}
                 className="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-50"
               >
                 Clear
@@ -159,48 +145,33 @@ export default function StaffPaymentsPage() {
         <div className="bg-white shadow rounded-lg">
           <div className="px-4 py-5 sm:p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4">
-              Payments ({filteredPayments.length})
+              Appointments ({filteredAppointments.length})
             </h2>
-            {filteredPayments.length > 0 ? (
+            {filteredAppointments.length > 0 ? (
               <div className="space-y-4">
-                {filteredPayments.map((payment) => (
-                  <div key={payment._id} className="border border-gray-200 rounded-lg p-4">
+                {filteredAppointments.map((apt) => (
+                  <div key={apt._id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
                         <div className="flex items-center space-x-4">
-                          <CreditCard className="w-8 h-8 text-gray-400" />
+                          <User className="w-8 h-8 text-gray-400" />
                           <div className="flex-1">
                             <h3 className="text-lg font-medium text-gray-900">
-                              {payment.patientID?.userName || 'Unknown Patient'}
+                              {apt.patientID?.userName || 'Unknown'}
                             </h3>
                             <p className="text-sm text-gray-500">
-                              Ref: {payment.transactionReference || 'N/A'}
+                              Dr. {apt.doctorID?.userName || 'Unknown'} - {apt.doctorID?.specialization}
                             </p>
-                            <div className="mt-2 grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
-                              <div>
-                                <span className="text-gray-500">Amount:</span>
-                                <span className="ml-1 font-medium text-gray-900">
-                                  LKR {payment.amount.toFixed(2)}
-                                </span>
+                            <div className="mt-2 flex items-center space-x-4 text-sm text-gray-500">
+                              <div className="flex items-center">
+                                <Calendar className="w-4 h-4 mr-1" />
+                                {new Date(apt.date).toLocaleDateString()}
                               </div>
-                              <div>
-                                <span className="text-gray-500">Method:</span>
-                                <span className="ml-1 font-medium text-gray-900 capitalize">
-                                  {payment.method.replace('_', ' ')}
-                                </span>
+                              <div className="flex items-center">
+                                <Clock className="w-4 h-4 mr-1" />
+                                {apt.time}
                               </div>
-                              <div>
-                                <span className="text-gray-500">Date:</span>
-                                <span className="ml-1 font-medium text-gray-900">
-                                  {new Date(payment.createdAt).toLocaleDateString()}
-                                </span>
-                              </div>
-                              <div>
-                                <span className="text-gray-500">Time:</span>
-                                <span className="ml-1 font-medium text-gray-900">
-                                  {new Date(payment.createdAt).toLocaleTimeString()}
-                                </span>
-                              </div>
+                              <span className="capitalize">{apt.type}</span>
                             </div>
                           </div>
                         </div>
@@ -208,31 +179,24 @@ export default function StaffPaymentsPage() {
                       <div className="flex flex-col items-end space-y-2">
                         <span
                           className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            payment.status === 'completed' ? 'bg-green-100 text-green-800' :
-                            payment.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            payment.status === 'processing' ? 'bg-blue-100 text-blue-800' :
-                            payment.status === 'failed' ? 'bg-red-100 text-red-800' :
-                            'bg-gray-100 text-gray-800'
+                            apt.status === 'scheduled' ? 'bg-blue-100 text-blue-800' :
+                            apt.status === 'confirmed' ? 'bg-green-100 text-green-800' :
+                            apt.status === 'in_progress' ? 'bg-yellow-100 text-yellow-800' :
+                            apt.status === 'completed' ? 'bg-gray-100 text-gray-800' :
+                            'bg-red-100 text-red-800'
                           }`}
                         >
-                          {payment.status}
+                          {apt.status}
                         </span>
                         <div className="flex space-x-2">
-                          {payment.status === 'pending' && (
+                          {apt.status === 'scheduled' && (
                             <button
-                              onClick={() => updatePaymentStatus(payment._id, 'completed')}
+                              onClick={() => updateStatus(apt._id, 'confirmed')}
                               className="text-xs bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700"
                             >
-                              Complete
+                              Confirm
                             </button>
                           )}
-                          <Link
-                            href={`/staff/payments/${payment._id}`}
-                            className="text-xs bg-indigo-600 text-white px-3 py-1 rounded hover:bg-indigo-700 flex items-center"
-                          >
-                            <Eye className="w-3 h-3 mr-1" />
-                            View
-                          </Link>
                         </div>
                       </div>
                     </div>
@@ -240,7 +204,7 @@ export default function StaffPaymentsPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-center text-gray-500 py-8">No payments found</p>
+              <p className="text-center text-gray-500 py-8">No appointments found</p>
             )}
           </div>
         </div>
@@ -248,3 +212,4 @@ export default function StaffPaymentsPage() {
     </div>
   );
 }
+

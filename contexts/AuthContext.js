@@ -25,12 +25,10 @@ export const AuthProvider = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      const token = Cookies.get('token');
-      if (token) {
-        const response = await authAPI.verifyToken();
-        setUser(response.data.data.user);
-        setIsAuthenticated(true);
-      }
+      // Always attempt to verify using httpOnly cookie via withCredentials
+      const response = await authAPI.verifyToken();
+      setUser(response.data.data.user);
+      setIsAuthenticated(true);
     } catch (error) {
       console.error('Auth check failed:', error);
       Cookies.remove('token');

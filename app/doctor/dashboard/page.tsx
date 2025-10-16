@@ -50,11 +50,11 @@ export default function DoctorDashboard() {
       setRecentMedicalRecords(records);
       
       // Calculate stats
-      const todayAppointmentsCount = appointments.filter(apt => 
+      const todayAppointmentsCount = appointments.filter((apt: any) => 
         new Date(apt.date).toDateString() === new Date().toDateString()
       ).length;
       
-      const completedAppointments = appointments.filter(apt => 
+      const completedAppointments = appointments.filter((apt: any) => 
         apt.status === 'completed'
       ).length;
       
@@ -77,7 +77,7 @@ export default function DoctorDashboard() {
     await logout();
   };
 
-  const updateAppointmentStatus = async (appointmentId, status) => {
+  const updateAppointmentStatus = async (appointmentId: string, status: string) => {
     try {
       await appointmentsAPI.update(appointmentId, { status });
       toast.success('Appointment status updated');

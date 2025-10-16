@@ -9,11 +9,11 @@ import { FileText, Calendar, User, ArrowLeft, Download, Eye, Filter } from 'luci
 import Link from 'next/link';
 
 export default function PatientMedicalRecords() {
-  const { user } = useAuth();
+  const { user } = useAuth() as any;
   const [loading, setLoading] = useState(true);
-  const [medicalRecords, setMedicalRecords] = useState([]);
-  const [filteredRecords, setFilteredRecords] = useState([]);
-  const [selectedRecord, setSelectedRecord] = useState(null);
+  const [medicalRecords, setMedicalRecords] = useState<any[]>([]);
+  const [filteredRecords, setFilteredRecords] = useState<any[]>([]);
+  const [selectedRecord, setSelectedRecord] = useState<any>(null);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -71,7 +71,7 @@ export default function PatientMedicalRecords() {
     setFilteredRecords(filtered);
   };
 
-  const viewRecord = (record) => {
+  const viewRecord = (record: any) => {
     setSelectedRecord(record);
   };
 
@@ -79,11 +79,128 @@ export default function PatientMedicalRecords() {
     setSelectedRecord(null);
   };
 
-  const downloadRecord = async (recordId) => {
+  const downloadRecord = async (recordId: string) => {
     try {
-      // This would typically generate a PDF of the medical record
-      toast.success('Medical record download started');
+      const record = medicalRecords.find(r => r._id === recordId) || selectedRecord;
+      if (!record) {
+        toast.error('Record not found');
+        return;
+      }
+
+      // Create a printable HTML content
+      const printContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Medical Record - ${new Date(record.visitDate).toLocaleDateString()}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 20px; margin-bottom: 20px; }
+            .header h1 { margin: 0; color: #333; }
+            .section { margin-bottom: 20px; }
+            .section h2 { color: #555; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+            .info-row { margin: 10px 0; }
+            .label { font-weight: bold; color: #666; }
+            .medications, .diagnosis { margin-left: 20px; }
+            .medications li, .diagnosis li { margin: 5px 0; }
+            .footer { margin-top: 40px; text-align: center; color: #888; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Medical Record</h1>
+            <p>${record.hospitalID?.name || 'Healthcare System'}</p>
+            <p>Record ID: ${record.recordID || record._id}</p>
+          </div>
+
+          <div class="section">
+            <h2>Patient Information</h2>
+            <div class="info-row"><span class="label">Name:</span> ${user?.userName || 'N/A'}</div>
+            <div class="info-row"><span class="label">Visit Date:</span> ${new Date(record.visitDate).toLocaleDateString()}</div>
+          </div>
+
+          <div class="section">
+            <h2>Doctor Information</h2>
+            <div class="info-row"><span class="label">Doctor:</span> Dr. ${record.doctorID?.userName || 'Unknown'}</div>
+            <div class="info-row"><span class="label">Specialization:</span> ${record.doctorID?.specialization || 'N/A'}</div>
+            <div class="info-row"><span class="label">Hospital:</span> ${record.hospitalID?.name || 'N/A'}</div>
+          </div>
+
+          <div class="section">
+            <h2>Chief Complaint</h2>
+            <p>${record.chiefComplaint || 'N/A'}</p>
+          </div>
+
+          ${record.historyOfPresentIllness ? `
+          <div class="section">
+            <h2>History of Present Illness</h2>
+            <p>${record.historyOfPresentIllness}</p>
+          </div>
+          ` : ''}
+
+          ${record.physicalExamination?.vitalSigns ? `
+          <div class="section">
+            <h2>Vital Signs</h2>
+            ${record.physicalExamination.vitalSigns.bloodPressure ? `<div class="info-row"><span class="label">Blood Pressure:</span> ${record.physicalExamination.vitalSigns.bloodPressure}</div>` : ''}
+            ${record.physicalExamination.vitalSigns.heartRate ? `<div class="info-row"><span class="label">Heart Rate:</span> ${record.physicalExamination.vitalSigns.heartRate} bpm</div>` : ''}
+            ${record.physicalExamination.vitalSigns.temperature ? `<div class="info-row"><span class="label">Temperature:</span> ${record.physicalExamination.vitalSigns.temperature}°C</div>` : ''}
+            ${record.physicalExamination.vitalSigns.respiratoryRate ? `<div class="info-row"><span class="label">Respiratory Rate:</span> ${record.physicalExamination.vitalSigns.respiratoryRate}/min</div>` : ''}
+          </div>
+          ` : ''}
+
+          ${record.diagnosis && record.diagnosis.length > 0 ? `
+          <div class="section">
+            <h2>Diagnosis</h2>
+            <ul class="diagnosis">
+              ${record.diagnosis.map((d: any) => `<li>${d.description}${d.code ? ` (${d.code})` : ''}</li>`).join('')}
+            </ul>
+          </div>
+          ` : ''}
+
+          ${record.treatmentPlan?.medications && record.treatmentPlan.medications.length > 0 ? `
+          <div class="section">
+            <h2>Medications</h2>
+            <ul class="medications">
+              ${record.treatmentPlan.medications.map((med: any) => 
+                `<li><strong>${med.name}</strong> - ${med.dosage} - ${med.frequency} - ${med.duration}
+                ${med.instructions ? `<br/><em>Instructions: ${med.instructions}</em>` : ''}</li>`
+              ).join('')}
+            </ul>
+          </div>
+          ` : ''}
+
+          ${record.treatmentPlan?.followUpInstructions ? `
+          <div class="section">
+            <h2>Follow-up Instructions</h2>
+            <p>${record.treatmentPlan.followUpInstructions}</p>
+          </div>
+          ` : ''}
+
+          <div class="footer">
+            <p>This is a computer-generated medical record.</p>
+            <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Create a new window and print
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(printContent);
+        printWindow.document.close();
+        printWindow.focus();
+        
+        // Wait for content to load then print
+        setTimeout(() => {
+          printWindow.print();
+          toast.success('Medical record ready for download');
+        }, 250);
+      } else {
+        toast.error('Please allow pop-ups to download the medical record');
+      }
     } catch (error) {
+      console.error('Download error:', error);
       toast.error('Failed to download medical record');
     }
   };
@@ -197,7 +314,7 @@ export default function PatientMedicalRecords() {
                               </p>
                               {record.diagnosis && record.diagnosis.length > 0 && (
                                 <p className="text-sm text-gray-600 mt-1">
-                                  <strong>Diagnosis:</strong> {record.diagnosis.map(d => d.description).join(', ')}
+                                  <strong>Diagnosis:</strong> {record.diagnosis.map((d: any) => d.description).join(', ')}
                                 </p>
                               )}
                             </div>
@@ -353,7 +470,7 @@ export default function PatientMedicalRecords() {
                 <div>
                   <h4 className="font-medium text-gray-900">Diagnosis</h4>
                   <ul className="text-sm text-gray-600">
-                    {selectedRecord.diagnosis.map((diagnosis, index) => (
+                    {selectedRecord.diagnosis.map((diagnosis: any, index: number) => (
                       <li key={index} className="mb-1">
                         {diagnosis.description} {diagnosis.code && `(${diagnosis.code})`}
                       </li>
@@ -369,7 +486,7 @@ export default function PatientMedicalRecords() {
                     <div className="mb-2">
                       <h5 className="font-medium text-gray-800">Medications:</h5>
                       <ul className="text-sm text-gray-600">
-                        {selectedRecord.treatmentPlan.medications.map((med, index) => (
+                        {selectedRecord.treatmentPlan.medications.map((med: any, index: number) => (
                           <li key={index} className="mb-1">
                             {med.name} - {med.dosage} - {med.frequency} - {med.duration}
                           </li>
@@ -390,7 +507,7 @@ export default function PatientMedicalRecords() {
                 <div>
                   <h4 className="font-medium text-gray-900">Progress Notes</h4>
                   <div className="space-y-2">
-                    {selectedRecord.progressNotes.map((note, index) => (
+                    {selectedRecord.progressNotes.map((note: any, index: number) => (
                       <div key={index} className="border-l-2 border-gray-200 pl-3">
                         <p className="text-sm text-gray-600">{note.note}</p>
                         <p className="text-xs text-gray-500">

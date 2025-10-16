@@ -96,9 +96,192 @@ export default function PatientPaymentsPage() {
 
   const generateReceipt = async (paymentId: string) => {
     try {
-      await paymentsAPI.generateReceipt(paymentId, 'pdf');
-      toast.success('Receipt generated successfully');
+      const payment = payments.find(p => p._id === paymentId);
+      if (!payment) {
+        toast.error('Payment not found');
+        return;
+      }
+
+      // Generate receipt number if not exists
+      const response = await paymentsAPI.generateReceipt(paymentId, 'pdf');
+      const receiptData = response.data.data.receipt;
+
+      // Create printable receipt HTML
+      const receiptContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <title>Receipt - ${receiptData.receiptNumber || payment.transactionReference}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+            .receipt-header { text-align: center; border-bottom: 3px solid #333; padding-bottom: 20px; margin-bottom: 30px; }
+            .receipt-header h1 { margin: 0; color: #333; font-size: 28px; }
+            .receipt-header p { margin: 5px 0; color: #666; }
+            .receipt-number { font-size: 20px; font-weight: bold; color: #4F46E5; margin: 15px 0; }
+            .section { margin-bottom: 25px; }
+            .section h2 { color: #555; border-bottom: 2px solid #ddd; padding-bottom: 8px; margin-bottom: 15px; }
+            .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+            .info-row { margin: 8px 0; }
+            .label { font-weight: bold; color: #666; display: inline-block; width: 150px; }
+            .value { color: #333; }
+            .items-table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+            .items-table th { background: #f3f4f6; padding: 12px; text-align: left; border-bottom: 2px solid #333; }
+            .items-table td { padding: 10px; border-bottom: 1px solid #ddd; }
+            .total-section { margin-top: 20px; padding-top: 20px; border-top: 2px solid #333; }
+            .total-row { display: flex; justify-content: space-between; margin: 8px 0; font-size: 16px; }
+            .grand-total { font-size: 20px; font-weight: bold; color: #4F46E5; }
+            .status-badge { display: inline-block; padding: 5px 15px; border-radius: 20px; font-weight: bold; }
+            .status-completed { background: #10B981; color: white; }
+            .status-pending { background: #F59E0B; color: white; }
+            .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #ddd; text-align: center; color: #888; font-size: 12px; }
+          </style>
+        </head>
+        <body>
+          <div class="receipt-header">
+            <h1>PAYMENT RECEIPT</h1>
+            <p>${payment.hospitalID?.name || 'Healthcare System'}</p>
+            ${payment.hospitalID?.address ? `<p>${payment.hospitalID.address.street}, ${payment.hospitalID.address.city}</p>` : ''}
+            <div class="receipt-number">Receipt #: ${receiptData.receiptNumber || payment.transactionReference}</div>
+            <span class="status-badge status-${payment.status}">${payment.status.toUpperCase()}</span>
+          </div>
+
+          <div class="section">
+            <h2>Payment Information</h2>
+            <div class="info-grid">
+              <div>
+                <div class="info-row">
+                  <span class="label">Patient Name:</span>
+                  <span class="value">${user?.userName || 'N/A'}</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">Transaction Ref:</span>
+                  <span class="value">${payment.transactionReference || 'N/A'}</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">Payment Method:</span>
+                  <span class="value">${payment.method.replace('_', ' ').toUpperCase()}</span>
+                </div>
+              </div>
+              <div>
+                <div class="info-row">
+                  <span class="label">Payment Date:</span>
+                  <span class="value">${new Date(payment.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div class="info-row">
+                  <span class="label">Payment Time:</span>
+                  <span class="value">${new Date(payment.createdAt).toLocaleTimeString()}</span>
+                </div>
+                ${payment.appointmentID ? `
+                <div class="info-row">
+                  <span class="label">Appointment ID:</span>
+                  <span class="value">${payment.appointmentID.appointmentID || 'N/A'}</span>
+                </div>
+                ` : ''}
+              </div>
+            </div>
+          </div>
+
+          ${payment.billingDetails?.services && payment.billingDetails.services.length > 0 ? `
+          <div class="section">
+            <h2>Services / Items</h2>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Description</th>
+                  <th style="text-align: center;">Quantity</th>
+                  <th style="text-align: right;">Unit Price</th>
+                  <th style="text-align: right;">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${payment.billingDetails.services.map(service => `
+                  <tr>
+                    <td>${service.serviceName}</td>
+                    <td style="text-align: center;">${service.quantity}</td>
+                    <td style="text-align: right;">LKR ${service.unitPrice.toFixed(2)}</td>
+                    <td style="text-align: right;">LKR ${(service.unitPrice * service.quantity).toFixed(2)}</td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+
+            <div class="total-section">
+              <div class="total-row">
+                <span>Subtotal:</span>
+                <span>LKR ${payment.billingDetails.subtotal.toFixed(2)}</span>
+              </div>
+              ${payment.billingDetails.tax > 0 ? `
+              <div class="total-row">
+                <span>Tax:</span>
+                <span>LKR ${payment.billingDetails.tax.toFixed(2)}</span>
+              </div>
+              ` : ''}
+              ${payment.billingDetails.discount > 0 ? `
+              <div class="total-row">
+                <span>Discount:</span>
+                <span>- LKR ${payment.billingDetails.discount.toFixed(2)}</span>
+              </div>
+              ` : ''}
+              <div class="total-row grand-total">
+                <span>TOTAL PAID:</span>
+                <span>LKR ${payment.billingDetails.total.toFixed(2)}</span>
+              </div>
+            </div>
+          </div>
+          ` : `
+          <div class="section">
+            <h2>Payment Amount</h2>
+            <div class="total-row grand-total">
+              <span>TOTAL PAID:</span>
+              <span>LKR ${payment.amount.toFixed(2)}</span>
+            </div>
+          </div>
+          `}
+
+          ${payment.insuranceInfo && payment.method === 'insurance' ? `
+          <div class="section">
+            <h2>Insurance Information</h2>
+            <div class="info-row">
+              <span class="label">Provider:</span>
+              <span class="value">${payment.insuranceInfo.provider || 'N/A'}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Policy Number:</span>
+              <span class="value">${payment.insuranceInfo.policyNumber || 'N/A'}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Claim Number:</span>
+              <span class="value">${payment.insuranceInfo.claimNumber || 'N/A'}</span>
+            </div>
+          </div>
+          ` : ''}
+
+          <div class="footer">
+            <p><strong>Thank you for your payment!</strong></p>
+            <p>This is a computer-generated receipt. No signature required.</p>
+            <p>Generated on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}</p>
+            ${payment.hospitalID?.contactInfo?.phone ? `<p>For inquiries, please contact: ${payment.hospitalID.contactInfo.phone}</p>` : ''}
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Open print window
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(receiptContent);
+        printWindow.document.close();
+        printWindow.focus();
+        
+        setTimeout(() => {
+          printWindow.print();
+          toast.success('Receipt ready for download');
+        }, 250);
+      } else {
+        toast.error('Please allow pop-ups to download the receipt');
+      }
     } catch (err) {
+      console.error('Receipt generation error:', err);
       toast.error('Failed to generate receipt');
     }
   };

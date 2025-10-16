@@ -34,13 +34,17 @@ export default function Home() {
   const renderDashboard = () => {
     switch (user.role) {
       case 'patient':
-        return <PatientDashboard />;
+        router.push('/patient/dashboard');
+        return null;
       case 'healthcare_professional':
-        return <HealthcareProfessionalDashboard />;
+        router.push('/doctor/dashboard');
+        return null;
       case 'healthcare_manager':
-        return <HealthcareManagerDashboard />;
+        router.push('/manager/dashboard');
+        return null;
       case 'hospital_staff':
-        return <HospitalStaffDashboard />;
+        router.push('/staff/dashboard');
+        return null;
       default:
         return (
           <div className="min-h-screen flex items-center justify-center">

@@ -12,7 +12,7 @@ import { ArrowLeft, Calendar } from 'lucide-react';
 
 export default function ManagerAnalyticsPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
     from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],

@@ -10,15 +10,15 @@ import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
 export default function CreateMedicalRecord() {
-  const { user } = useAuth();
+  const { user } = useAuth() as any;
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [patients, setPatients] = useState([]);
+  const [patients, setPatients] = useState<any[]>([]);
   const [hospitals, setHospitals] = useState([]);
   const [appointments, setAppointments] = useState([]);
-  const [selectedPatient, setSelectedPatient] = useState(null);
-  const [selectedAppointment, setSelectedAppointment] = useState(null);
+  const [selectedPatient, setSelectedPatient] = useState<any>(null);
+  const [selectedAppointment, setSelectedAppointment] = useState<any>(null);
   const [formData, setFormData] = useState({
     patientID: '',
     appointmentID: '',
@@ -137,7 +137,7 @@ export default function CreateMedicalRecord() {
     }
   };
 
-  const fetchPatient = async (patientId) => {
+  const fetchPatient = async (patientId: string) => {
     try {
       const response = await usersAPI.getById(patientId);
       setSelectedPatient(response.data.data.user);
@@ -146,7 +146,7 @@ export default function CreateMedicalRecord() {
     }
   };
 
-  const fetchAppointment = async (appointmentId) => {
+  const fetchAppointment = async (appointmentId: string) => {
     try {
       const response = await appointmentsAPI.getById(appointmentId);
       const appointment = response.data.data.appointment;
@@ -167,12 +167,12 @@ export default function CreateMedicalRecord() {
     }
   };
 
-  const handlePatientSelect = (patientId) => {
+  const handlePatientSelect = (patientId: string) => {
     setFormData(prev => ({ ...prev, patientID: patientId }));
     fetchPatient(patientId);
   };
 
-  const handleAppointmentSelect = (appointmentId) => {
+  const handleAppointmentSelect = (appointmentId: string) => {
     setFormData(prev => ({ ...prev, appointmentID: appointmentId }));
     if (appointmentId) {
       fetchAppointment(appointmentId);
@@ -183,7 +183,7 @@ export default function CreateMedicalRecord() {
 
   const addDiagnosis = () => {
     if (newDiagnosis.description.trim()) {
-      setFormData(prev => ({
+      setFormData((prev: any) => ({
         ...prev,
         diagnosis: [...prev.diagnosis, { ...newDiagnosis }]
       }));
@@ -191,16 +191,16 @@ export default function CreateMedicalRecord() {
     }
   };
 
-  const removeDiagnosis = (index) => {
-    setFormData(prev => ({
+  const removeDiagnosis = (index: number) => {
+    setFormData((prev: any) => ({
       ...prev,
-      diagnosis: prev.diagnosis.filter((_, i) => i !== index)
+      diagnosis: prev.diagnosis.filter((_: any, i: number) => i !== index)
     }));
   };
 
   const addMedication = () => {
     if (newMedication.name.trim()) {
-      setFormData(prev => ({
+      setFormData((prev: any) => ({
         ...prev,
         treatmentPlan: {
           ...prev.treatmentPlan,
@@ -211,19 +211,19 @@ export default function CreateMedicalRecord() {
     }
   };
 
-  const removeMedication = (index) => {
+  const removeMedication = (index: number) => {
     setFormData(prev => ({
       ...prev,
       treatmentPlan: {
         ...prev.treatmentPlan,
-        medications: prev.treatmentPlan.medications.filter((_, i) => i !== index)
+        medications: prev.treatmentPlan.medications.filter((_: any, i: number) => i !== index)
       }
     }));
   };
 
   const addLabResult = () => {
     if (newLabResult.testName.trim()) {
-      setFormData(prev => ({
+      setFormData((prev: any) => ({
         ...prev,
         labResults: [...prev.labResults, { ...newLabResult }]
       }));
@@ -231,16 +231,16 @@ export default function CreateMedicalRecord() {
     }
   };
 
-  const removeLabResult = (index) => {
-    setFormData(prev => ({
+  const removeLabResult = (index: number) => {
+    setFormData((prev: any) => ({
       ...prev,
-      labResults: prev.labResults.filter((_, i) => i !== index)
+      labResults: prev.labResults.filter((_: any, i: number) => i !== index)
     }));
   };
 
   const addAllergy = () => {
     if (newAllergy.allergen.trim()) {
-      setFormData(prev => ({
+      setFormData((prev: any) => ({
         ...prev,
         allergies: [...prev.allergies, { ...newAllergy }]
       }));
@@ -248,17 +248,17 @@ export default function CreateMedicalRecord() {
     }
   };
 
-  const removeAllergy = (index) => {
-    setFormData(prev => ({
+  const removeAllergy = (index: number) => {
+    setFormData((prev: any) => ({
       ...prev,
-      allergies: prev.allergies.filter((_, i) => i !== index)
+      allergies: prev.allergies.filter((_: any, i: number) => i !== index)
     }));
   };
 
-  const handleInputChange = (field, value) => {
+  const handleInputChange = (field: string, value: any) => {
     if (field.includes('.')) {
       const [parent, child] = field.split('.');
-      setFormData(prev => ({
+      setFormData((prev: any) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
@@ -266,15 +266,15 @@ export default function CreateMedicalRecord() {
         }
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev: any) => ({
         ...prev,
         [field]: value
       }));
     }
   };
 
-  const handleVitalSignsChange = (field, value) => {
-    setFormData(prev => ({
+  const handleVitalSignsChange = (field: string, value: any) => {
+    setFormData((prev: any) => ({
       ...prev,
       physicalExamination: {
         ...prev.physicalExamination,
@@ -286,7 +286,7 @@ export default function CreateMedicalRecord() {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     
     if (!formData.patientID || !formData.hospitalID || !formData.chiefComplaint) {
@@ -305,7 +305,7 @@ export default function CreateMedicalRecord() {
         window.location.href = '/doctor/medical-records';
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create medical record');
+      toast.error((error as any).response?.data?.message || 'Failed to create medical record');
     } finally {
       setSubmitting(false);
     }
@@ -346,7 +346,7 @@ export default function CreateMedicalRecord() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="">Select an appointment to auto-fill patient & hospital</option>
-                {appointments.map((appointment) => (
+                {appointments.map((appointment: any) => (
                   <option key={appointment._id} value={appointment._id}>
                     {appointment.appointmentID} - {appointment.patientID?.userName} - {new Date(appointment.date).toLocaleDateString()} {appointment.time}
                   </option>
@@ -369,7 +369,7 @@ export default function CreateMedicalRecord() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="">Select a patient</option>
-                  {patients.map((patient) => (
+                  {patients.map((patient: any) => (
                     <option key={patient._id} value={patient._id}>
                       {patient.userName} - {patient.email}
                     </option>
@@ -388,7 +388,7 @@ export default function CreateMedicalRecord() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="">Select a hospital</option>
-                  {hospitals.map((hospital) => (
+                  {hospitals.map((hospital: any) => (
                     <option key={hospital._id} value={hospital._id}>
                       {hospital.name}
                     </option>
@@ -582,7 +582,7 @@ export default function CreateMedicalRecord() {
             {/* Diagnosis List */}
             {formData.diagnosis.length > 0 && (
               <div className="space-y-2">
-                {formData.diagnosis.map((diagnosis, index) => (
+                {formData.diagnosis.map((diagnosis: any, index: number) => (
                   <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
                     <div>
                       <span className="font-medium">{diagnosis.description}</span>
@@ -679,7 +679,7 @@ export default function CreateMedicalRecord() {
               {/* Medications List */}
               {formData.treatmentPlan.medications.length > 0 && (
                 <div className="space-y-2">
-                  {formData.treatmentPlan.medications.map((medication, index) => (
+                  {formData.treatmentPlan.medications.map((medication: any, index: number) => (
                     <div key={index} className="flex items-center justify-between bg-gray-50 p-3 rounded-md">
                       <div>
                         <span className="font-medium">{medication.name}</span>

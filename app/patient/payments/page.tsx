@@ -11,7 +11,7 @@ import { ArrowLeft, CreditCard, Download, Eye, Filter, Calendar } from 'lucide-r
 
 export default function PatientPaymentsPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<any[]>([]);
   const [filteredPayments, setFilteredPayments] = useState<any[]>([]);
@@ -96,7 +96,7 @@ export default function PatientPaymentsPage() {
 
   const generateReceipt = async (paymentId: string) => {
     try {
-      const payment = payments.find(p => p._id === paymentId);
+      const payment = payments.find((p: any) => p._id === paymentId);
       if (!payment) {
         toast.error('Payment not found');
         return;
@@ -194,7 +194,7 @@ export default function PatientPaymentsPage() {
                 </tr>
               </thead>
               <tbody>
-                ${payment.billingDetails.services.map(service => `
+                ${payment.billingDetails.services.map((service: any) => `
                   <tr>
                     <td>${service.serviceName}</td>
                     <td style="text-align: center;">${service.quantity}</td>

@@ -41,7 +41,7 @@ export default function RegisterPage() {
     staffRole: '',
   });
   const [loading, setLoading] = useState(false);
-  const { register, isAuthenticated, loading: authLoading } = useAuth();
+  const { register, isAuthenticated, loading: authLoading } = useAuth() as any;
   const router = useRouter();
 
   useEffect(() => {
@@ -50,12 +50,12 @@ export default function RegisterPage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: any) => {
     const { name, value } = e.target;
     
     if (name.includes('.')) {
       const [parent, child] = name.split('.');
-      setFormData(prev => ({
+      setFormData((prev: any) => ({
         ...prev,
         [parent]: {
           ...prev[parent],
@@ -63,14 +63,14 @@ export default function RegisterPage() {
         },
       }));
     } else {
-      setFormData(prev => ({
+      setFormData((prev: any) => ({
         ...prev,
         [name]: value,
       }));
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: any) => {
     alert()
     e.preventDefault();
     setLoading(true);
@@ -90,7 +90,7 @@ export default function RegisterPage() {
 
     try {
       // Prepare data based on role
-      const userData = {
+      const userData: any = {
         userName: formData.userName,
         email: formData.email,
         password: formData.password,

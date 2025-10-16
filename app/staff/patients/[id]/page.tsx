@@ -12,7 +12,7 @@ import { ArrowLeft, Edit, User, Phone, Mail, MapPin, Heart } from 'lucide-react'
 export default function ViewPatientPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [patient, setPatient] = useState<any>(null);
 

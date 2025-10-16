@@ -12,7 +12,7 @@ export default function LoginPage() {
     password: '',
   });
   const [loading, setLoading] = useState(false);
-  const { login, isAuthenticated, loading: authLoading } = useAuth();
+  const { login, isAuthenticated, loading: authLoading } = useAuth() as any;
   const router = useRouter();
 
   useEffect(() => {
@@ -21,14 +21,14 @@ export default function LoginPage() {
     }
   }, [authLoading, isAuthenticated, router]);
 
-  const handleChange = (e) => {
+  const handleChange = (e: any) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     setLoading(true);
 

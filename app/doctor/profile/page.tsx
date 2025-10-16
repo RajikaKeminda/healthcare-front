@@ -10,7 +10,7 @@ import { ArrowLeft, Save, Lock } from 'lucide-react';
 
 export default function DoctorProfilePage() {
   const router = useRouter();
-  const { user, loading: authLoading, updateProfile, changePassword } = useAuth();
+  const { user, loading: authLoading, updateProfile, changePassword } = useAuth() as any;
   const [activeTab, setActiveTab] = useState<'profile' | 'password'>('profile');
   const [submitting, setSubmitting] = useState(false);
   const [profileData, setProfileData] = useState<any>({

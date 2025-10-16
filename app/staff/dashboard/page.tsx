@@ -9,7 +9,7 @@ import { Calendar, Clock, CreditCard, Users, User, LogOut, Building2, Plus, Eye,
 import Link from 'next/link';
 
 export default function StaffDashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     todayAppointments: 0,
@@ -58,11 +58,11 @@ export default function StaffDashboard() {
       setRecentPatients(patients);
       
       // Calculate stats
-      const todayAppointmentsCount = appointments.filter(apt => 
+      const todayAppointmentsCount = appointments.filter((apt: any) => 
         new Date(apt.date).toDateString() === new Date().toDateString()
       ).length;
       
-      const completedAppointments = appointments.filter(apt => 
+      const completedAppointments = appointments.filter((apt: any) => 
         apt.status === 'completed'
       ).length;
       
@@ -85,7 +85,7 @@ export default function StaffDashboard() {
     await logout();
   };
 
-  const updateAppointmentStatus = async (appointmentId, status) => {
+  const updateAppointmentStatus = async (appointmentId: string, status: string) => {
     try {
       await appointmentsAPI.update(appointmentId, { status });
       toast.success('Appointment status updated');
@@ -95,7 +95,7 @@ export default function StaffDashboard() {
     }
   };
 
-  const processPayment = async (paymentId, status) => {
+  const processPayment = async (paymentId: string, status: string) => {
     try {
       // This would typically be a separate API endpoint
       await paymentsAPI.update(paymentId, { status });
@@ -282,7 +282,7 @@ export default function StaffDashboard() {
               </div>
               <div className="space-y-4">
                 {todayAppointments.length > 0 ? (
-                  todayAppointments.map((appointment) => (
+                  todayAppointments.map((appointment: any) => (
                     <div key={appointment._id} className="border-b border-gray-200 pb-4 last:border-b-0">
                       <div className="flex justify-between items-start">
                         <div>
@@ -341,7 +341,7 @@ export default function StaffDashboard() {
               </div>
               <div className="space-y-4">
                 {pendingPayments.length > 0 ? (
-                  pendingPayments.map((payment) => (
+                  pendingPayments.map((payment: any) => (
                     <div key={payment._id} className="border-b border-gray-200 pb-4 last:border-b-0">
                       <div className="flex justify-between items-start">
                         <div>
@@ -395,7 +395,7 @@ export default function StaffDashboard() {
               </div>
               <div className="space-y-4">
                 {recentPatients.length > 0 ? (
-                  recentPatients.map((patient) => (
+                  recentPatients.map((patient: any) => (
                     <div key={patient._id} className="border-b border-gray-200 pb-4 last:border-b-0">
                       <div className="flex justify-between items-start">
                         <div>

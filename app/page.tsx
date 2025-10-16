@@ -10,7 +10,7 @@ import HospitalStaffDashboard from '../components/dashboards/HospitalStaffDashbo
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 export default function Home() {
-  const { user, loading, isAuthenticated } = useAuth();
+  const { user, loading, isAuthenticated } = useAuth() as any;
   const router = useRouter();
 
   useEffect(() => {

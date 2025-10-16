@@ -12,7 +12,7 @@ import { ArrowLeft, CreditCard, FileText, Download } from 'lucide-react';
 export default function ViewPaymentPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [payment, setPayment] = useState<any>(null);
 

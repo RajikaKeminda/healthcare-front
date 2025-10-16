@@ -12,7 +12,7 @@ import { ArrowLeft, User, Calendar, FileText, Pill, Activity, Edit, Trash2 } fro
 export default function ViewMedicalRecordPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [record, setRecord] = useState<any>(null);
 

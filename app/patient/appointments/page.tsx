@@ -9,7 +9,7 @@ import { Calendar, Clock, MapPin, User, ArrowLeft, Plus, Filter } from 'lucide-r
 import Link from 'next/link';
 
 export default function PatientAppointments() {
-  const { user } = useAuth();
+  const { user } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [appointments, setAppointments] = useState([]);
   const [filteredAppointments, setFilteredAppointments] = useState([]);
@@ -54,21 +54,21 @@ export default function PatientAppointments() {
     let filtered = [...appointments];
 
     if (filters.status) {
-      filtered = filtered.filter(apt => apt.status === filters.status);
+      filtered = filtered.filter((apt: any) => apt.status === filters.status);
     }
 
     if (filters.dateFrom) {
-      filtered = filtered.filter(apt => new Date(apt.date) >= new Date(filters.dateFrom));
+      filtered = filtered.filter((apt: any) => new Date(apt.date) >= new Date(filters.dateFrom));
     }
 
     if (filters.dateTo) {
-      filtered = filtered.filter(apt => new Date(apt.date) <= new Date(filters.dateTo));
+      filtered = filtered.filter((apt: any) => new Date(apt.date) <= new Date(filters.dateTo));
     }
 
     setFilteredAppointments(filtered);
   };
 
-  const cancelAppointment = async (appointmentId) => {
+  const cancelAppointment = async (appointmentId: string) => {
     if (!confirm('Are you sure you want to cancel this appointment?')) {
       return;
     }
@@ -82,12 +82,12 @@ export default function PatientAppointments() {
     }
   };
 
-  const rescheduleAppointment = (appointmentId) => {
+  const rescheduleAppointment = (appointmentId: string) => {
     // Redirect to booking page with appointment ID for rescheduling
     window.location.href = `/patient/appointments/book?reschedule=${appointmentId}`;
   };
 
-  const getStatusColor = (status) => {
+  const getStatusColor = (status: string) => {
     switch (status) {
       case 'scheduled':
         return 'bg-blue-100 text-blue-800';
@@ -106,17 +106,17 @@ export default function PatientAppointments() {
     }
   };
 
-  const canCancel = (appointment) => {
-    const appointmentDate = new Date(appointment.date);
-    const now = new Date();
+  const canCancel = (appointment: any) => {
+    const appointmentDate: any = new Date(appointment.date);
+    const now: any = new Date();
     const hoursUntilAppointment = (appointmentDate - now) / (1000 * 60 * 60);
     
     return appointment.status === 'scheduled' && hoursUntilAppointment > 24;
   };
 
-  const canReschedule = (appointment) => {
-    const appointmentDate = new Date(appointment.date);
-    const now = new Date();
+  const canReschedule = (appointment: any) => {
+    const appointmentDate: any = new Date(appointment.date);
+    const now: any = new Date();
     const hoursUntilAppointment = (appointmentDate - now) / (1000 * 60 * 60);
     
     return appointment.status === 'scheduled' && hoursUntilAppointment > 24;
@@ -171,7 +171,7 @@ export default function PatientAppointments() {
               </label>
               <select
                 value={filters.status}
-                onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                onChange={(e) => setFilters((prev: any) => ({ ...prev, status: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               >
                 <option value="">All Statuses</option>
@@ -190,7 +190,7 @@ export default function PatientAppointments() {
               <input
                 type="date"
                 value={filters.dateFrom}
-                onChange={(e) => setFilters(prev => ({ ...prev, dateFrom: e.target.value }))}
+                onChange={(e) => setFilters((prev: any) => ({ ...prev, dateFrom: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
@@ -201,7 +201,7 @@ export default function PatientAppointments() {
               <input
                 type="date"
                 value={filters.dateTo}
-                onChange={(e) => setFilters(prev => ({ ...prev, dateTo: e.target.value }))}
+                onChange={(e) => setFilters((prev: any) => ({ ...prev, dateTo: e.target.value }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
               />
             </div>
@@ -225,7 +225,7 @@ export default function PatientAppointments() {
             
             {filteredAppointments.length > 0 ? (
               <div className="space-y-4">
-                {filteredAppointments.map((appointment) => (
+                {filteredAppointments.map((appointment: any) => (
                   <div key={appointment._id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">

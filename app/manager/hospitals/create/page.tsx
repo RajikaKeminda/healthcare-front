@@ -11,7 +11,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 
 export default function CreateHospitalPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth() as any;
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<any>({
     name: '',

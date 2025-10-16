@@ -12,7 +12,7 @@ import { ArrowLeft, Edit, Trash2 } from 'lucide-react';
 export default function ViewUserPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth() as any;
   const [data, setData] = useState<any>(null);
   const [busy, setBusy] = useState(false);
 

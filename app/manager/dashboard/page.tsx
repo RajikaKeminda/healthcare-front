@@ -10,12 +10,12 @@ import { TrendingUp, Users, Calendar, DollarSign, User, LogOut, BarChart3, Downl
 import Link from 'next/link';
 
 export default function ManagerDashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuth() as any;
   const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState(null);
-  const [appointmentData, setAppointmentData] = useState(null);
-  const [financialData, setFinancialData] = useState(null);
-  const [patientData, setPatientData] = useState(null);
+  const [dashboardData, setDashboardData] = useState<any>(null);
+  const [appointmentData, setAppointmentData] = useState<any>(null);
+  const [financialData, setFinancialData] = useState<any>(null);
+  const [patientData, setPatientData] = useState<any>(null);
 
   useEffect(() => {
     if (user) {
@@ -51,7 +51,7 @@ export default function ManagerDashboard() {
     }
   };
 
-  const handleExport = async (type, format) => {
+  const handleExport = async (type: string, format: string) => {
     try {
       const response = await analyticsAPI.export({
         type,
@@ -315,7 +315,7 @@ export default function ManagerDashboard() {
                       fill="#8884d8"
                       dataKey="count"
                     >
-                      {appointmentData.byStatus.map((entry, index) => (
+                      {appointmentData.byStatus.map((entry: any, index: number) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
@@ -354,7 +354,7 @@ export default function ManagerDashboard() {
                   Payment Methods
                 </h3>
                 <div className="space-y-4">
-                  {financialData.byMethod.map((method, index) => (
+                  {financialData.byMethod.map((method: any, index: number) => (
                     <div key={method._id} className="flex items-center justify-between">
                       <div className="flex items-center">
                         <div

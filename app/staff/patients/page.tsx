@@ -11,7 +11,7 @@ import { ArrowLeft, User, Search, Eye, Edit } from 'lucide-react';
 
 export default function StaffPatientsPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [patients, setPatients] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');

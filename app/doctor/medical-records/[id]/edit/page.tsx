@@ -12,7 +12,7 @@ import { ArrowLeft, Save, Plus, X } from 'lucide-react';
 export default function EditMedicalRecordPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [hospitals, setHospitals] = useState<any[]>([]);

@@ -12,7 +12,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 export default function EditPatientPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<any>({

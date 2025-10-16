@@ -11,7 +11,7 @@ import { ArrowLeft, Plus, Eye, Edit, Search, Building2, MapPin, Phone } from 'lu
 
 export default function ManagerHospitalsPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [hospitals, setHospitals] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState('');

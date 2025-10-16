@@ -11,15 +11,15 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
 export default function BookAppointment() {
-  const { user } = useAuth();
+  const { user } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [hospitals, setHospitals] = useState([]);
-  const [selectedHospital, setSelectedHospital] = useState(null);
+  const [selectedHospital, setSelectedHospital] = useState<any>(null);
   const [doctors, setDoctors] = useState([]);
-  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [selectedDoctor, setSelectedDoctor] = useState<any>(null);
   const [availableSlots, setAvailableSlots] = useState([]);
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedTime, setSelectedTime] = useState('');
   const [formData, setFormData] = useState({
     type: 'regular',
@@ -61,7 +61,7 @@ export default function BookAppointment() {
 
   const fetchDoctors = async () => {
     try {
-      const response = await hospitalsAPI.getDoctors(selectedHospital._id);
+      const response = await hospitalsAPI.getDoctors(selectedHospital?._id);
       setDoctors(response.data.data.doctors);
     } catch (error) {
       toast.error('Failed to load doctors');
@@ -80,14 +80,14 @@ export default function BookAppointment() {
     }
   };
 
-  const handleHospitalSelect = (hospital) => {
+  const handleHospitalSelect = (hospital: any) => {
     setSelectedHospital(hospital);
     setSelectedDoctor(null);
     setAvailableSlots([]);
     setSelectedTime('');
   };
 
-  const handleDoctorSelect = (doctor) => {
+  const handleDoctorSelect = (doctor: any) => {
     setSelectedDoctor(doctor);
     setAvailableSlots([]);
     setSelectedTime('');
@@ -95,7 +95,7 @@ export default function BookAppointment() {
 
   const addSymptom = () => {
     if (formData.newSymptom.trim()) {
-      setFormData(prev => ({
+      setFormData((prev: any) => ({
         ...prev,
         symptoms: [...prev.symptoms, prev.newSymptom.trim()],
         newSymptom: ''
@@ -103,10 +103,10 @@ export default function BookAppointment() {
     }
   };
 
-  const removeSymptom = (index) => {
-    setFormData(prev => ({
+  const removeSymptom = (index: number) => {
+    setFormData((prev: any) => ({
       ...prev,
-      symptoms: prev.symptoms.filter((_, i) => i !== index)
+      symptoms: prev.symptoms.filter((_: any, i: number) => i !== index)
     }));
   };
 
@@ -115,7 +115,7 @@ export default function BookAppointment() {
     return selectedDoctor.consultationFee * RESERVATION_FEE_PERCENTAGE;
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
     
     if (!selectedHospital || !selectedDoctor || !selectedTime) {
@@ -173,7 +173,7 @@ export default function BookAppointment() {
         window.location.href = '/patient/appointments';
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to book appointment or process payment');
+      toast.error((error as any).response?.data?.message || 'Failed to book appointment or process payment');
     } finally {
       setSubmitting(false);
     }
@@ -211,7 +211,7 @@ export default function BookAppointment() {
           <div className="bg-white shadow rounded-lg p-6">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Select Hospital</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {hospitals.map((hospital) => (
+              {hospitals.map((hospital: any) => (
                 <div
                   key={hospital._id}
                   onClick={() => handleHospitalSelect(hospital)}
@@ -243,7 +243,7 @@ export default function BookAppointment() {
               <h2 className="text-lg font-medium text-gray-900 mb-4">Select Doctor</h2>
               {doctors.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {doctors.map((doctor) => (
+                  {doctors.map((doctor: any) => (
                     <div
                       key={doctor._id}
                       onClick={() => handleDoctorSelect(doctor)}
@@ -290,7 +290,7 @@ export default function BookAppointment() {
                   </label>
                   <DatePicker
                     selected={selectedDate}
-                    onChange={(date) => setSelectedDate(date)}
+                    onChange={(date: Date) => setSelectedDate(date)}
                     minDate={new Date()}
                     maxDate={new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)} // 30 days from now
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
@@ -303,7 +303,7 @@ export default function BookAppointment() {
                   </label>
                   {availableSlots.length > 0 ? (
                     <div className="grid grid-cols-3 gap-2">
-                      {availableSlots.map((slot) => (
+                      {availableSlots.map((slot: any) => (
                         <button
                           key={slot}
                           type="button"
@@ -337,7 +337,7 @@ export default function BookAppointment() {
                   </label>
                   <select
                     value={formData.type}
-                    onChange={(e) => setFormData(prev => ({ ...prev, type: e.target.value }))}
+                    onChange={(e) => setFormData((prev: any) => ({ ...prev, type: e.target.value }))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                   >
                     <option value="regular">Regular</option>
@@ -355,7 +355,7 @@ export default function BookAppointment() {
                     <input
                       type="text"
                       value={formData.newSymptom}
-                      onChange={(e) => setFormData(prev => ({ ...prev, newSymptom: e.target.value }))}
+                      onChange={(e) => setFormData((prev: any) => ({ ...prev, newSymptom: e.target.value }))}
                       placeholder="Add a symptom"
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                       onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSymptom())}
@@ -370,7 +370,7 @@ export default function BookAppointment() {
                   </div>
                   {formData.symptoms.length > 0 && (
                     <div className="flex flex-wrap gap-2">
-                      {formData.symptoms.map((symptom, index) => (
+                      {formData.symptoms.map((symptom: any, index: number) => (
                         <span
                           key={index}
                           className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 text-gray-800"
@@ -395,7 +395,7 @@ export default function BookAppointment() {
                   </label>
                   <textarea
                     value={formData.notes}
-                    onChange={(e) => setFormData(prev => ({ ...prev, notes: e.target.value }))}
+                    onChange={(e) => setFormData((prev: any) => ({ ...prev, notes: e.target.value }))}
                     rows={3}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
                     placeholder="Any additional information..."

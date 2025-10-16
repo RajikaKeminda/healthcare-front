@@ -11,7 +11,7 @@ import { ArrowLeft, Calendar, Clock, User, Search, Filter } from 'lucide-react';
 
 export default function StaffAppointmentsPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [appointments, setAppointments] = useState<any[]>([]);
   const [filters, setFilters] = useState({

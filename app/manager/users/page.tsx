@@ -9,7 +9,7 @@ import { Users, User, ArrowLeft, Plus, Eye, Edit, Trash2, Filter, Search } from 
 import Link from 'next/link';
 
 export default function UserManagement() {
-  const { user } = useAuth();
+  const { user } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
@@ -54,24 +54,24 @@ export default function UserManagement() {
     let filtered = [...users];
 
     if (filters.role) {
-      filtered = filtered.filter(user => user.role === filters.role);
+      filtered = filtered.filter((user: any) => user.role === filters.role);
     }
 
     if (filters.search) {
-      filtered = filtered.filter(user => 
+      filtered = filtered.filter((user: any) => 
         user.userName.toLowerCase().includes(filters.search.toLowerCase()) ||
         user.email.toLowerCase().includes(filters.search.toLowerCase())
       );
     }
 
     if (filters.isActive !== '') {
-      filtered = filtered.filter(user => user.isActive === (filters.isActive === 'true'));
+      filtered = filtered.filter((user: any) => user.isActive === (filters.isActive === 'true'));
     }
 
     setFilteredUsers(filtered);
   };
 
-  const deleteUser = async (userId) => {
+  const deleteUser = async (userId: string) => {
     if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) {
       return;
     }
@@ -85,7 +85,7 @@ export default function UserManagement() {
     }
   };
 
-  const toggleUserStatus = async (userId, isActive) => {
+  const toggleUserStatus = async (userId: string, isActive: boolean) => {
     try {
       await usersAPI.update(userId, { isActive: !isActive });
       toast.success(`User ${!isActive ? 'activated' : 'deactivated'} successfully`);
@@ -95,7 +95,7 @@ export default function UserManagement() {
     }
   };
 
-  const getRoleDisplayName = (role) => {
+  const getRoleDisplayName = (role: string) => {
     switch (role) {
       case 'patient':
         return 'Patient';
@@ -110,7 +110,7 @@ export default function UserManagement() {
     }
   };
 
-  const getRoleColor = (role) => {
+  const getRoleColor = (role: string) => {
     switch (role) {
       case 'patient':
         return 'bg-blue-100 text-blue-800';
@@ -233,7 +233,7 @@ export default function UserManagement() {
             
             {filteredUsers.length > 0 ? (
               <div className="space-y-4">
-                {filteredUsers.map((userItem) => (
+                {filteredUsers.map((userItem: any) => (
                   <div key={userItem._id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">

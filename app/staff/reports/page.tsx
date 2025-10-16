@@ -11,7 +11,7 @@ import { ArrowLeft, Download, FileText, Calendar, DollarSign, Users } from 'luci
 
 export default function StaffReportsPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth() as any;
   const [generating, setGenerating] = useState(false);
   const [reportType, setReportType] = useState('appointments');
   const [dateRange, setDateRange] = useState({

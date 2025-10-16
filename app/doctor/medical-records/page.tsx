@@ -9,10 +9,10 @@ import { FileText, Calendar, User, ArrowLeft, Plus, Eye, Edit, Trash2, Filter } 
 import Link from 'next/link';
 
 export default function DoctorMedicalRecords() {
-  const { user } = useAuth();
+  const { user } = useAuth() as any;
   const [loading, setLoading] = useState(true);
-  const [medicalRecords, setMedicalRecords] = useState([]);
-  const [filteredRecords, setFilteredRecords] = useState([]);
+  const [medicalRecords, setMedicalRecords] = useState<any[]>([]);
+  const [filteredRecords, setFilteredRecords] = useState<any[]>([]);
   const [pagination, setPagination] = useState({
     currentPage: 1,
     totalPages: 1,
@@ -55,15 +55,15 @@ export default function DoctorMedicalRecords() {
     let filtered = [...medicalRecords];
 
     if (filters.dateFrom) {
-      filtered = filtered.filter(record => new Date(record.visitDate) >= new Date(filters.dateFrom));
+      filtered = filtered.filter((record: any) => new Date(record.visitDate) >= new Date(filters.dateFrom));
     }
 
     if (filters.dateTo) {
-      filtered = filtered.filter(record => new Date(record.visitDate) <= new Date(filters.dateTo));
+      filtered = filtered.filter((record: any) => new Date(record.visitDate) <= new Date(filters.dateTo));
     }
 
     if (filters.patient) {
-      filtered = filtered.filter(record => 
+      filtered = filtered.filter((record: any) => 
         record.patientID?.userName?.toLowerCase().includes(filters.patient.toLowerCase())
       );
     }
@@ -71,7 +71,7 @@ export default function DoctorMedicalRecords() {
     setFilteredRecords(filtered);
   };
 
-  const deleteRecord = async (recordId) => {
+  const deleteRecord = async (recordId: string) => {
     if (!confirm('Are you sure you want to delete this medical record? This action cannot be undone.')) {
       return;
     }
@@ -182,7 +182,7 @@ export default function DoctorMedicalRecords() {
             
             {filteredRecords.length > 0 ? (
               <div className="space-y-4">
-                {filteredRecords.map((record) => (
+                {filteredRecords.map((record: any) => (
                   <div key={record._id} className="border border-gray-200 rounded-lg p-4">
                     <div className="flex justify-between items-start">
                       <div className="flex-1">
@@ -203,7 +203,7 @@ export default function DoctorMedicalRecords() {
                               </p>
                               {record.diagnosis && record.diagnosis.length > 0 && (
                                 <p className="text-sm text-gray-600 mt-1">
-                                  <strong>Diagnosis:</strong> {record.diagnosis.map(d => d.description).join(', ')}
+                                  <strong>Diagnosis:</strong> {record.diagnosis.map((d: any) => d.description).join(', ')}
                                 </p>
                               )}
                             </div>

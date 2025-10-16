@@ -9,7 +9,7 @@ import { Calendar, Clock, Users, FileText, User, LogOut, Stethoscope, Plus, Eye 
 import Link from 'next/link';
 
 export default function DoctorDashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     todayAppointments: 0,
@@ -263,7 +263,7 @@ export default function DoctorDashboard() {
               </div>
               <div className="space-y-4">
                 {todayAppointments.length > 0 ? (
-                  todayAppointments.map((appointment) => (
+                  todayAppointments.map((appointment: any) => (
                     <div key={appointment._id} className="border-b border-gray-200 pb-4 last:border-b-0">
                       <div className="flex justify-between items-start">
                         <div>
@@ -340,7 +340,7 @@ export default function DoctorDashboard() {
               </div>
               <div className="space-y-4">
                 {recentMedicalRecords.length > 0 ? (
-                  recentMedicalRecords.map((record) => (
+                  recentMedicalRecords.map((record: any) => (
                     <div key={record._id} className="border-b border-gray-200 pb-4 last:border-b-0">
                       <div className="flex justify-between items-start">
                         <div>

@@ -12,7 +12,7 @@ import { ArrowLeft, Save } from 'lucide-react';
 export default function EditUserPage() {
   const params = useParams();
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth() as any;
   const [submitting, setSubmitting] = useState(false);
   const [formData, setFormData] = useState<any>(null);
 

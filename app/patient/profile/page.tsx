@@ -11,7 +11,7 @@ import { ArrowLeft, Save, User, Mail, Phone, MapPin, Calendar, Heart, Edit2 } fr
 
 export default function PatientProfilePage() {
   const router = useRouter();
-  const { user, loading: authLoading, checkAuth } = useAuth();
+  const { user, loading: authLoading, checkAuth } = useAuth() as any;
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);

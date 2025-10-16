@@ -11,7 +11,7 @@ import { ArrowLeft, Download, FileText, DollarSign, Users } from 'lucide-react';
 
 export default function ManagerReportsPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth() as any;
   const [downloading, setDownloading] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState({
     from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],

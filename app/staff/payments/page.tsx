@@ -11,7 +11,7 @@ import { ArrowLeft, CreditCard, Search, Filter, Plus, Eye } from 'lucide-react';
 
 export default function StaffPaymentsPage() {
   const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth() as any;
   const [loading, setLoading] = useState(true);
   const [payments, setPayments] = useState<any[]>([]);
   const [filters, setFilters] = useState({

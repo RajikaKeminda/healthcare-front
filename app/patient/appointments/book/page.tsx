@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../../contexts/AuthContext';
-import { hospitalsAPI, appointmentsAPI } from '../../../../lib/api';
+import { hospitalsAPI, appointmentsAPI, paymentsAPI } from '../../../../lib/api';
 import { toast } from 'react-toastify';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
-import { Calendar, Clock, MapPin, User, ArrowLeft } from 'lucide-react';
+import { Calendar, Clock, MapPin, User, ArrowLeft, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -27,6 +27,10 @@ export default function BookAppointment() {
     notes: '',
     newSymptom: ''
   });
+  const [paymentMethod, setPaymentMethod] = useState('credit_card');
+  
+  // Reservation fee is typically 20% of consultation fee or a fixed amount
+  const RESERVATION_FEE_PERCENTAGE = 0.2;
 
   useEffect(() => {
     fetchHospitals();
@@ -106,11 +110,21 @@ export default function BookAppointment() {
     }));
   };
 
+  const calculateReservationFee = () => {
+    if (!selectedDoctor?.consultationFee) return 0;
+    return selectedDoctor.consultationFee * RESERVATION_FEE_PERCENTAGE;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     if (!selectedHospital || !selectedDoctor || !selectedTime) {
       toast.error('Please select hospital, doctor, and time slot');
+      return;
+    }
+
+    if (!paymentMethod) {
+      toast.error('Please select a payment method');
       return;
     }
 
@@ -127,15 +141,39 @@ export default function BookAppointment() {
         notes: formData.notes
       };
 
-      const response = await appointmentsAPI.create(appointmentData);
+      // Create appointment first
+      const appointmentResponse = await appointmentsAPI.create(appointmentData);
       
-      if (response.data.success) {
-        toast.success('Appointment booked successfully!');
+      if (appointmentResponse.data.success) {
+        const appointment = appointmentResponse.data.data.appointment;
+        const reservationFee = calculateReservationFee();
+
+        // Process reservation fee payment
+        const paymentData = {
+          appointmentID: appointment._id,
+          hospitalID: selectedHospital._id,
+          amount: reservationFee,
+          method: paymentMethod,
+          billingDetails: {
+            services: [
+              {
+                serviceName: 'Appointment Reservation Fee',
+                unitPrice: reservationFee,
+                quantity: 1,
+                totalPrice: reservationFee
+              }
+            ]
+          }
+        };
+
+        await paymentsAPI.process(paymentData);
+        
+        toast.success('Appointment booked and reservation fee paid successfully!');
         // Redirect to appointments page
         window.location.href = '/patient/appointments';
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to book appointment');
+      toast.error(error.response?.data?.message || 'Failed to book appointment or process payment');
     } finally {
       setSubmitting(false);
     }
@@ -367,19 +405,96 @@ export default function BookAppointment() {
             </div>
           )}
 
+          {/* Payment Section */}
+          {selectedTime && (
+            <div className="bg-white shadow rounded-lg p-6">
+              <div className="flex items-center mb-4">
+                <CreditCard className="w-5 h-5 text-indigo-600 mr-2" />
+                <h2 className="text-lg font-medium text-gray-900">Reservation Fee Payment</h2>
+              </div>
+              
+              <div className="bg-blue-50 border border-blue-200 rounded-md p-4 mb-4">
+                <p className="text-sm text-blue-800">
+                  <strong>Note:</strong> A reservation fee of LKR {calculateReservationFee().toFixed(2)} 
+                  ({(RESERVATION_FEE_PERCENTAGE * 100).toFixed(0)}% of consultation fee) is required to confirm your appointment.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Payment Method *
+                </label>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('credit_card')}
+                    className={`p-4 border rounded-md transition-colors ${
+                      paymentMethod === 'credit_card'
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <CreditCard className="w-6 h-6 mx-auto mb-2 text-gray-600" />
+                    <p className="text-sm font-medium text-center">Credit Card</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('debit_card')}
+                    className={`p-4 border rounded-md transition-colors ${
+                      paymentMethod === 'debit_card'
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <CreditCard className="w-6 h-6 mx-auto mb-2 text-gray-600" />
+                    <p className="text-sm font-medium text-center">Debit Card</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('digital_wallet')}
+                    className={`p-4 border rounded-md transition-colors ${
+                      paymentMethod === 'digital_wallet'
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <CreditCard className="w-6 h-6 mx-auto mb-2 text-gray-600" />
+                    <p className="text-sm font-medium text-center">Digital Wallet</p>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPaymentMethod('bank_transfer')}
+                    className={`p-4 border rounded-md transition-colors ${
+                      paymentMethod === 'bank_transfer'
+                        ? 'border-indigo-500 bg-indigo-50'
+                        : 'border-gray-300 hover:border-gray-400'
+                    }`}
+                  >
+                    <CreditCard className="w-6 h-6 mx-auto mb-2 text-gray-600" />
+                    <p className="text-sm font-medium text-center">Bank Transfer</p>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Submit Button */}
           {selectedTime && (
             <div className="bg-white shadow rounded-lg p-6">
               <div className="flex justify-between items-center">
                 <div>
                   <h3 className="text-lg font-medium text-gray-900">Appointment Summary</h3>
-                  <div className="mt-2 text-sm text-gray-600">
+                  <div className="mt-2 text-sm text-gray-600 space-y-1">
                     <p><strong>Hospital:</strong> {selectedHospital?.name}</p>
                     <p><strong>Doctor:</strong> Dr. {selectedDoctor?.userName} ({selectedDoctor?.specialization})</p>
                     <p><strong>Date:</strong> {selectedDate.toLocaleDateString()}</p>
                     <p><strong>Time:</strong> {selectedTime}</p>
                     <p><strong>Type:</strong> {formData.type}</p>
-                    <p><strong>Consultation Fee:</strong> LKR {selectedDoctor?.consultationFee}</p>
+                    <div className="pt-2 border-t border-gray-200 mt-2">
+                      <p><strong>Consultation Fee:</strong> LKR {selectedDoctor?.consultationFee?.toFixed(2)}</p>
+                      <p className="text-indigo-600"><strong>Reservation Fee (Now):</strong> LKR {calculateReservationFee().toFixed(2)}</p>
+                      <p className="text-gray-500"><strong>Remaining (At Clinic):</strong> LKR {(selectedDoctor?.consultationFee - calculateReservationFee()).toFixed(2)}</p>
+                    </div>
                   </div>
                 </div>
                 <button
@@ -390,10 +505,10 @@ export default function BookAppointment() {
                   {submitting ? (
                     <div className="flex items-center">
                       <LoadingSpinner size="small" className="mr-2" />
-                      Booking...
+                      Processing...
                     </div>
                   ) : (
-                    'Book Appointment'
+                    `Pay LKR ${calculateReservationFee().toFixed(2)} & Book`
                   )}
                 </button>
               </div>

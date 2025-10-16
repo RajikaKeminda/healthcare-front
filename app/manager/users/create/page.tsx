@@ -4,15 +4,16 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
-import { usersAPI } from '../../../../lib/api';
+import { usersAPI, hospitalsAPI } from '../../../../lib/api';
 import { useAuth } from '../../../../contexts/AuthContext';
 import LoadingSpinner from '../../../../components/ui/LoadingSpinner';
 import { ArrowLeft, Save } from 'lucide-react';
 
 export default function CreateUserPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading } = useAuth() as any;
   const [submitting, setSubmitting] = useState(false);
+  const [hospitals, setHospitals] = useState<any[]>([]);
   const [formData, setFormData] = useState<any>({
     userName: '',
     email: '',
@@ -27,6 +28,7 @@ export default function CreateUserPage() {
       zipCode: '',
       country: 'Sri Lanka',
     },
+    hospitalID: '',
   });
 
   useEffect(() => {
@@ -34,6 +36,19 @@ export default function CreateUserPage() {
       router.push('/');
     }
   }, [user, loading, router]);
+
+  useEffect(() => {
+    fetchHospitals();
+  }, []);
+
+  const fetchHospitals = async () => {
+    try {
+      const res = await hospitalsAPI.getAll({ limit: 100 });
+      setHospitals(res.data.data.hospitals);
+    } catch (err) {
+      console.error('Failed to load hospitals');
+    }
+  };
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
@@ -113,6 +128,17 @@ export default function CreateUserPage() {
                 <option value="healthcare_manager">Healthcare Manager</option>
               </select>
             </div>
+            {formData.role === 'healthcare_professional' && (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Hospital</label>
+                <select name="hospitalID" value={formData.hospitalID} onChange={handleChange} className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500">
+                  <option value="">Select Hospital (Optional)</option>
+                  {hospitals.map((h) => (
+                    <option key={h._id} value={h._id}>{h.name}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

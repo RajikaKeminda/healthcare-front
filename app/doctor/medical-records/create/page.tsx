@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useAuth } from '../../../../contexts/AuthContext';
 import { medicalRecordsAPI, usersAPI, appointmentsAPI, hospitalsAPI } from '../../../../lib/api';
 import { toast } from 'react-toastify';
@@ -9,7 +9,7 @@ import { FileText, User, ArrowLeft, Plus, X, Upload } from 'lucide-react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 
-export default function CreateMedicalRecord() {
+function CreateMedicalRecordContent() {
   const { user } = useAuth() as any;
   const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
@@ -744,6 +744,14 @@ export default function CreateMedicalRecord() {
         </form>
       </main>
     </div>
+  );
+}
+
+export default function CreateMedicalRecord() {
+  return (
+    <Suspense fallback={<LoadingSpinner />}>
+      <CreateMedicalRecordContent />
+    </Suspense>
   );
 }
 
